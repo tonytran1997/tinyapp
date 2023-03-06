@@ -37,8 +37,17 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: "http://www.lighthouselabs.ca" };
+  let shortURL = req.params.shortURL;
+  let longURL = urlDatabase[req.params.shortURL];
+  const templateVars = { shortURL: shortURL, longURL: longURL };
   res.render("urls_show", templateVars);
+  res.redirect(longURL);
+});
+
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  res.redirect(longURL);
 });
 
 app.post("/urls", (req, res) => {
@@ -53,7 +62,7 @@ const generateRandomString = () => {
 
   let index = Math.round(Math.random() * 100);
   if (index > 35) {
-    while (index > 61) {
+    while (index > 36) {
       index = Math.round(Math.random() * 100);
     }
   }
