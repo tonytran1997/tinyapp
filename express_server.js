@@ -60,6 +60,12 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect('/urls')
 });
 
+app.post("/urls/:id/edit", (req, res) => {
+  const editURL = req.params.shortURL;
+  urlDatabase[editURL] = req.body.longURL;
+  res.redirect('/urls')
+});
+
 const generateRandomString = () => {
   const alphabet = 'abcdefghigklmnopqrstuvwxyz';
   const numbers = '1234567890';
