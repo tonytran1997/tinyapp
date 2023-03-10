@@ -8,8 +8,14 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookie());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -44,7 +50,13 @@ app.get("/hello", (req, res) => {
 //URLs
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user_id: req.cookies['user_id'] };
-  res.render("urls_index", templateVars);
+  if(!templateVars) {
+    res.send("Please login to see the URLs")
+  } else {
+    res.render('urls_index', templateVars)
+  }
+  //const templateVars = { urls: urlDatabase, user_id: req.cookies['user_id'] };
+  //res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
@@ -60,8 +72,8 @@ app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
   const templateVars = { shortURL: shortURL, longURL: longURL, user_id: req.cookies['user_id'] };
-  console.log(templateVars);
-  console.log(req.params)
+  //console.log(templateVars);
+  //console.log(req.params)
   res.render("urls_show", templateVars);
 });
 
@@ -85,7 +97,7 @@ app.post("/urls/:id/edit", (req, res) => {
 //User ID
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id];
+  const longURL = urlDatabase[id].longURL;
   if (!(req.cookies['user_id'])) {
     res.send("Cannot access shortened URL");
   }
@@ -131,6 +143,7 @@ app.post("/logout", (req, res) => {
   res.redirect('/urls')
 });
 
+//Functions
 const generateRandomString = () => {
   const alphabet = 'abcdefghigklmnopqrstuvwxyz';
   const numbers = '1234567890';
@@ -159,4 +172,15 @@ const addUser = newUser => {
   newUser.id = newUserID
   users[newUserID] = newUser;
   return newUser;
+};
+
+const urlsForUser = (id, database) => {
+  let userUrls = {};
+
+  for (let shortURL in database) {
+    if (database[shortURL].userID === id) {
+      userUrls[shortURL] = database[shortURL];
+    }
+  }
+  return userUrls
 };
