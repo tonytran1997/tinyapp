@@ -48,8 +48,12 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = { user_id: req.cookies['user_id']}
-  res.render("urls_new", templateVars);
+  if (req.cookies['user_id']) {
+    let templateVars = { user_id: req.cookies['user_id']}
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect('/login')
+  }
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -82,6 +86,9 @@ app.post("/urls/:id/edit", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
+  if (!(req.cookies['user_id'])) {
+    res.send("Cannot access shortened URL");
+  }
   res.redirect(longURL);
 });
 
@@ -89,7 +96,6 @@ app.get("/u/:id", (req, res) => {
 app.get("/register", (req, res) => {
   templateVars = { user_id:req.cookies['user_id']}
   res.render("user_registration", templateVars);
-  res.redirect('/urls')
 });
 
 app.post("/register", (req, res) => {
