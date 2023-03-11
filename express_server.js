@@ -2,6 +2,10 @@ const express = require("express");
 const app = express();
 const PORT = 8080; // default port 8080
 const cookie = require('cookie-parser')
+const bcrypt = require("bcryptjs");
+const password = "purple-monkey-dinosaur"; // found in the req.body object
+const hashedPassword = bcrypt.hashSync(password, 10);
+const { getUserByEmail, generateRandomString, addUser, urlsForUser } = require('./helpers');
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
@@ -55,8 +59,6 @@ app.get("/urls", (req, res) => {
   } else {
     res.render('urls_index', templateVars)
   }
-  //const templateVars = { urls: urlDatabase, user_id: req.cookies['user_id'] };
-  //res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
@@ -78,8 +80,16 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  if (req.session.userID) {
+    const shortURL = generateRandomString();
+    urlDatabase[shortURL] = {
+      longURL: req.body.longURL,
+      userID: req.session.userID
+    };
+    res.redirect(`/urls/${shortURL}`);
+  }
+  //console.log(req.body); // Log the POST request body to the console
+  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -131,56 +141,32 @@ app.get("/login", (req, res) => {
 })
 
 app.post("/login", (req, res) => {
-  const user_id = req.body.user.id;
-  if (users[req.body.user_id]) {
-    res.cookie('user_id', users.id);
+  const { email, password } = req.body;
+  const user = getUserByEmail(email, users);
+  if (!user) {
+    let templateVars = {
+      status: 401,
+      message: 'Email cannot be found',
+      user: users[req.session.user_id]
+    }
+    res.status(401);
+    res.render("user_login", templateVars)
+  } else if (!bcrypt.compareSync(password, user.password)) {
+    let templateVars = {
+      status: 401,
+      message: 'Password incorrect',
+      user: users[req.session.user_id]
+    }
+    res.status(401);
+    res.render("urls_login", templateVars);
+  } else {
+    req.session.user_id = user.id;
+    res.redirect('/urls')
   }
-  res.redirect('/urls');
+  bcrypt.compareSync("purple-monkey-dinosaur", hashedPassword);
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect('/urls')
 });
-
-//Functions
-const generateRandomString = () => {
-  const alphabet = 'abcdefghigklmnopqrstuvwxyz';
-  const numbers = '1234567890';
-  const alphaNumbric = alphabet + numbers;
-
-  let index = Math.round(Math.random() * 100);
-  if (index > 35) {
-    while (index > 36) {
-      index = Math.round(Math.random() * 100);
-    }
-  }
-  return alphaNumbric[index];
-};
-
-const getUserByEmail = (email, database) => {
-  for (const user in database) {
-    if (database[user].email === email) {
-      return database[user];
-    }
-  }
-  return null;
-};
-
-const addUser = newUser => {
-  const newUserID = generateRandomString();
-  newUser.id = newUserID
-  users[newUserID] = newUser;
-  return newUser;
-};
-
-const urlsForUser = (id, database) => {
-  let userUrls = {};
-
-  for (let shortURL in database) {
-    if (database[shortURL].userID === id) {
-      userUrls[shortURL] = database[shortURL];
-    }
-  }
-  return userUrls
-};
