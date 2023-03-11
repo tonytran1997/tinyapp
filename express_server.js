@@ -74,8 +74,6 @@ app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
   const longURL = urlDatabase[shortURL];
   const templateVars = { shortURL: shortURL, longURL: longURL, user_id: req.cookies['user_id'] };
-  //console.log(templateVars);
-  //console.log(req.params)
   res.render("urls_show", templateVars);
 });
 
@@ -88,8 +86,6 @@ app.post("/urls", (req, res) => {
     };
     res.redirect(`/urls/${shortURL}`);
   }
-  //console.log(req.body); // Log the POST request body to the console
-  //res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 
 app.post("/urls/:id/delete", (req, res) => {
