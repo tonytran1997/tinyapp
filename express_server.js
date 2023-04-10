@@ -54,8 +54,8 @@ app.get("/hello", (req, res) => {
 //URLs
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user_id: req.cookies['user_id'] };
-  if(!templateVars) {
-    res.send("Please login to see the URLs")
+  if (!(req.cookies['user_id'])) {
+    res.send("Please log in");
   } else {
     res.render('urls_index', templateVars)
   }
@@ -105,7 +105,7 @@ app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id].longURL;
   if (!(req.cookies['user_id'])) {
-    res.send("Cannot access shortened URL");
+    return res.send("Cannot access shortened URL");
   }
   res.redirect(longURL);
 });
@@ -119,14 +119,15 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const {email, password} = req.body;
   if (email === '') {
-    res.status(400).send('Please enter an email')
+    return res.status(400).send('Please enter an email')
   } else if (password === '') {
-    res.status(400).send('Please enter your password')
-  } else if (!getUserByEmail(email, users)) {
-    res.status(400).send('The email you have entered is already registered')
+    return res.status(400).send('Please enter your password')
+  } else if (getUserByEmail(email, users)) {
+    return res.status(400).send('The email you have entered is already registered')
   }
-  newUsers = addUser(req.body)
-  res.cookie('user_id', users.id)
+  const newUserID = generateRandomString();
+  users[newUserID] = {id:newUserID, email, password}
+  res.cookie('user_id', newUserID)
   res.redirect('/urls')
 });
 

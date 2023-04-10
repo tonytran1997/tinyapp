@@ -41,11 +41,10 @@
           <button type="submit" class="btn btn-outline-dark">Logout</button>
         </form>
       <% } else { %>
-        <form method="POST" action="/login">
-          <input type="text" name="user_id" placeholder="user_id" required>
+        <form method="GET" action="/login">
           <button type="submit" class="btn btn-outline-dark">Login</button>
       </form>
-      <form method="POST" action="/register">
+      <form method="GET" action="/register">
         <button type="submit" class="btn btn-outline-dark">Register</button>
     </form>
       <% } %>
