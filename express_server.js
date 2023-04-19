@@ -95,14 +95,14 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const {email, password} = req.body;
   if (email === '') {
-    res.status(400).send('Please enter an email')
+    return res.status(400).send('Please enter an email')
   } else if (password === '') {
-    res.status(400).send('Please enter your password')
-  } else if (!getUserByEmail(email, users)) {
-    res.status(400).send('The email you have entered is already registered')
+     return res.status(400).send('Please enter your password')
+  } else if (getUserByEmail(email, users)) {
+     return res.status(400).send('The email you have entered is already registered')
   }
-  newUsers = addUser(req.body)
-  res.cookie('user_id', users.id)
+  let newUsers = addUser(req.body)
+  res.cookie('user_id', newUsers.id)
   res.redirect('/urls')
 });
 
@@ -113,10 +113,23 @@ app.get("/login", (req, res) => {
 })
 
 app.post("/login", (req, res) => {
-  const user_id = req.body.user.id;
-  if (users[req.body.user_id]) {
-    res.cookie('user_id', users.id);
+  console.log(req.body)
+  const useremail = req.body.email;
+  const password = req.body.password;
+  if (useremail === '') {
+    return res.send('Please enter email')
   }
+  if (password === '') {
+    return res.send('Please enter password')
+  }
+  let userObject = getUserByEmail(useremail, users)
+  if (userObject === null) {
+    return res.send('The user does not exist')
+  }
+  if (password !== userObject.password) {
+    return res.send('Please enter the correct password')
+  }
+  res.cookie('user_id', userObject.id);
   res.redirect('/urls');
 });
 
