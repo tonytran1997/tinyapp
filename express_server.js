@@ -53,6 +53,7 @@ app.get("/hello", (req, res) => {
 
 //URLs
 app.get("/urls", (req, res) => {
+  console.log(urlDatabase)
   const templateVars = { urls: urlDatabase, user_id: req.cookies['user_id'] };
   if (!(req.cookies['user_id'])) {
     res.send("Please log in");
@@ -72,7 +73,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   const templateVars = { shortURL: shortURL, longURL: longURL, user_id: req.cookies['user_id'] };
   res.render("urls_show", templateVars);
 });
@@ -89,14 +90,16 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const deleteURL = req.params.shortURL;
+  const deleteURL = req.params.id;
+  console.log(deleteURL)
   delete urlDatabase[deleteURL];
   res.redirect('/urls')
 });
 
 app.post("/urls/:id/edit", (req, res) => {
+  console.log(req)
   const editURL = req.params.id;
-  urlDatabase[editURL] = req.body.longURL;
+  urlDatabase[editURL].longURL = req.body.longURL;
   res.redirect('/urls')
 });
 
@@ -128,6 +131,7 @@ app.post("/register", (req, res) => {
   const newUserID = generateRandomString();
   users[newUserID] = {id:newUserID, email, password}
   res.cookie('user_id', newUserID)
+  console.log(users)
   res.redirect('/urls')
 });
 
@@ -157,7 +161,7 @@ app.post("/login", (req, res) => {
     res.status(401);
     res.render("urls_login", templateVars);
   } else {
-    req.session.user_id = user.id;
+    req.cookie('user_id', user.id);
     res.redirect('/urls')
   }
   bcrypt.compareSync("purple-monkey-dinosaur", hashedPassword);
