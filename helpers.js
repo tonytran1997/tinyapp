@@ -8,18 +8,8 @@ const getUserByEmail = (email, database) => {
 };
 
 const generateRandomString = () => {
-  const alphabet = 'abcdefghigklmnopqrstuvwxyz';
-  const numbers = '1234567890';
-  const alphaNumbric = alphabet + numbers;
-
-  let index = Math.round(Math.random() * 100);
-  if (index > 35) {
-    while (index > 36) {
-      index = Math.round(Math.random() * 100);
-    }
-  }
-  return alphaNumbric[index];
-};
+  return Math.random().toString(36).substring(6);
+}
 
 const addUser = newUser => {
   const newUserID = generateRandomString();
