@@ -13,6 +13,8 @@ app.use(cookie({
   keys: ['userId']
 }));
 
+const { generateRandomString, urlsForUser, getUserByEmail, addUser } = require("./helpers");
+
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -22,52 +24,6 @@ const urlDatabase = {
     longURL: "https://www.google.ca",
     userId: "aJ48lW",
   },
-};
-
-
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-};
-
-const urlsForUser = (userId, database) => {
-  const userURLS = {};
-  
-  for (const key in database) {
-    if (database[key].userId === userId) {
-      userURLS[key] = database[key];
-    }
-  }
-  return userURLS;
-};
-
-const generateRandomString = () => {
-  return Math.random().toString(36).substring(6);
-};
-
-
-const getUserByEmail = (email, database) => {
-  for (const user in database) {
-    if (database[user].email === email) {
-      return database[user];
-    }
-  }
-  return null;
-};
-
-const addUser = newUser => {
-  const newuserId = generateRandomString();
-  newUser.id = newuserId
-  users[newuserId] = newUser;
-  return newUser;
 };
 
 app.get("/", (req, res) => {
