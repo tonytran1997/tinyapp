@@ -44,7 +44,6 @@ app.get("/hello", (req, res) => {
 
 //URLs
 app.get("/urls", (req, res) => {
-  console.log(urlDatabase)
   const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user_id: req.session.user_id };
   if (!(req.session.user_id)) {
     res.send("Please log in");
@@ -69,6 +68,33 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+//User ID
+app.get("/u/:id", (req, res) => {
+  const id = req.params.id;
+  const longURL = urlDatabase[id].longURL;
+  if (!(req.session.user_id)) {
+    return res.send("Cannot access shortened URL");
+  }
+  res.redirect(longURL);
+});
+
+//Register
+app.get("/register", (req, res) => {
+  templateVars = { user_id:req.session.user_id}
+  res.render("user_registration", templateVars);
+});
+
+//Login & Logout
+app.get("/login", (req, res) => {
+  const user_id = req.session.user_id
+  if (user_id) {
+    return res.redirect('/urls')
+  }
+  const templateVars = {user_id}
+  res.render("user_login", templateVars);
+});
+
+
 app.post("/urls", (req, res) => {
   if (req.session.user_id) {
     const shortURL = generateRandomString();
@@ -87,26 +113,9 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id/edit", (req, res) => {
-  console.log(req)
   const editURL = req.params.id;
   urlDatabase[editURL].longURL = req.body.longURL;
   res.redirect('/urls')
-});
-
-//User ID
-app.get("/u/:id", (req, res) => {
-  const id = req.params.id;
-  const longURL = urlDatabase[id].longURL;
-  if (!(req.session.user_id)) {
-    return res.send("Cannot access shortened URL");
-  }
-  res.redirect(longURL);
-});
-
-//Register
-app.get("/register", (req, res) => {
-  templateVars = { user_id:req.session.user_id}
-  res.render("user_registration", templateVars);
 });
 
 app.post("/register", (req, res) => {
@@ -126,18 +135,7 @@ app.post("/register", (req, res) => {
   res.redirect('/urls')
 });
 
-//Login & Logout
-app.get("/login", (req, res) => {
-  const user_id = req.session.user_id
-  if (user_id) {
-    return res.redirect('/urls')
-  }
-  const templateVars = {user_id}
-  res.render("user_login", templateVars);
-});
-
 app.post("/login", (req, res) => {
-  console.log(req.body)
   const useremail = req.body.email;
   const password = req.body.password;
   if (useremail === '') {
