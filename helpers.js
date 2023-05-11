@@ -11,22 +11,34 @@ const generateRandomString = () => {
   return Math.random().toString(36).substring(6);
 }
 
-const addUser = newUser => {
+const addUser = (newUser, users) => {
   const newUserID = generateRandomString();
-  newUser.id = newUserID
+  newUser.userID = newUserID
   users[newUserID] = newUser;
   return newUser;
 };
 
 const urlsForUser = (id, database) => {
-  let userUrls = {};
-
+  const userUrls = {};
+  
   for (let shortURL in database) {
-    if (database[shortURL].userID === id) {
+    if (database[shortURL].userId === id) {
       userUrls[shortURL] = database[shortURL];
     }
   }
   return userUrls
 };
 
-module.exports = {getUserByEmail, generateRandomString, addUser, urlsForUser}
+const verifyshortURL = (URL, database) => {
+  return database[URL];
+}
+
+const currentUser = (curr, database) => {
+  for (let ids in database) {
+    if (curr === ids) {
+      return database[ids].email;
+    }
+  }
+};
+
+module.exports = {getUserByEmail, generateRandomString, addUser, urlsForUser, verifyshortURL,currentUser};
