@@ -19,7 +19,7 @@ const users = {};
 
 //Redirects users to /login or /urls depending if they are logged in
 app.get("/", (req, res) => {
-  const user = currentUser(req.session.userId, users);
+  const user = currentUser(req.session.user_id, users);
   if (!user) {
     res.redirect('/login');
   } else {
@@ -29,35 +29,39 @@ app.get("/", (req, res) => {
 
 //Gets to the URL page and list URLs
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user_id: req.session.user_id };
-  if (!(req.session.user_id)) {
+  const user =  currentUser(req.session.user_id, users);
+  if (!user) {
     res.send("Please log in");
   } else {
+    const templateVars = { 
+      urls: urlsForUser(user, urlDatabase), 
+      user_id: req.session.user_id
+    };
     res.render('urls_index', templateVars)
   }
 });
 
 //Creates new URL page
 app.get("/urls/new", (req, res) => {
-  if (req.session.user_id) {
-    let templateVars = { user_id: req.session.user_id}
+  const user =  currentUser(req.session.user_id, users);
+  if (user) {
+    let templateVars = { user_id: req.session.user_id};
     res.render("urls_new", templateVars);
   } else {
-    res.redirect('/login')
+    res.redirect('/login');
   }
 });
 
-//Gets Users all of the URLs they own
+//Gets Users all of the URLs they ownD
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id; 
-  const user =  currentUser(req.session.userID, users); 
-  console.log(urlDatabase);
+  const user =  currentUser(req.session.user_id, users);
   if(verifyshortURL(shortURL,urlDatabase)){
     if (user !== urlDatabase[shortURL].userID){
       return res.send("Does not belong to you ");
     } else {
       const longURL = urlDatabase[shortURL].longURL;
-      let templateVars = { shortURL: shortURL, longURL: longURL, currentUser: user};
+      let templateVars = { shortURL: shortURL, longURL: longURL, userID: req.session.user_id};
       res.render('urls_show', templateVars);
     }
   } else{
@@ -69,23 +73,26 @@ app.get("/urls/:id", (req, res) => {
 //Users are able to access longURL website with shortURL
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id].longURL;
-  if (!(req.session.user_id)) {
-    return res.send("Cannot access shortened URL");
+  if (verifyshortURL(id,urlDatabase)){
+    const longURL = urlDatabase[id].longURL;
+    res.redirect(longURL);
+  } else{
+    return res.send("Error : does not exist");
   }
-  res.redirect(longURL);
 });
 
 
 
 //Register
 app.get("/register", (req, res) => {
+  const user =  currentUser(req.session.user_id, users); 
   templateVars = { user_id:req.session.user_id}
   res.render("user_registration", templateVars);
 });
 
 //Login & Logout
 app.get("/login", (req, res) => {
+  const user =  currentUser(req.session.user_id, users); 
   const user_id = req.session.user_id
   const templateVars = {user_id}
   res.render("user_login", templateVars);
@@ -93,11 +100,12 @@ app.get("/login", (req, res) => {
 
 //Users are able to add longURLs with shortURLs
 app.post("/urls", (req, res) => {
-  if (req.session.user_id) {
+  const user = currentUser(req.session.user_id,users);
+  if (user) {
     const shortURL = generateRandomString();
     urlDatabase[shortURL] = {
       longURL: req.body.longURL,
-      userId: req.session.user_id
+      userID: user
     };
     res.redirect(`/urls/${shortURL}`);
   }
@@ -156,7 +164,6 @@ app.post("/login", (req, res) => {
     return res.send('Please enter the correct password')
   }
   req.session.user_id = userObject.userID;
-  console.log('POST Login user database AFTER', users)
   res.redirect('/urls');
 });
 
