@@ -11,11 +11,9 @@ app.use(cookie({
   keys: ['userId']
 }));
 
-const { generateRandomString, urlsForUser, getUserByEmail, addUser, verifyshortURL, currentUser } = require("./helpers");
+const { generateRandomString, urlsForUser, getUserByEmail, addUser, verifyShortURL, currentUser } = require("./helpers");
 
-//Database for URLs and users
-const urlDatabase = {};
-const users = {};
+const { urlDatabase, users} = require("./database")
 
 //Redirects users to /login or /urls depending if they are logged in
 app.get("/", (req, res) => {
@@ -52,11 +50,11 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-//Gets Users all of the URLs they ownD
+//Gets Users all of the URLs they own
 app.get("/urls/:id", (req, res) => {
   const shortURL = req.params.id; 
   const user =  currentUser(req.session.user_id, users);
-  if(verifyshortURL(shortURL,urlDatabase)){
+  if(verifyShortURL(shortURL,urlDatabase)){
     if (user !== urlDatabase[shortURL].userID){
       return res.send("Does not belong to you ");
     } else {
@@ -73,15 +71,13 @@ app.get("/urls/:id", (req, res) => {
 //Users are able to access longURL website with shortURL
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  if (verifyshortURL(id,urlDatabase)){
+  if (verifyShortURL(id,urlDatabase)){
     const longURL = urlDatabase[id].longURL;
     res.redirect(longURL);
   } else{
     return res.send("Error : does not exist");
   }
 });
-
-
 
 //Register
 app.get("/register", (req, res) => {
@@ -113,16 +109,28 @@ app.post("/urls", (req, res) => {
 
 //Users are able to delete URLs
 app.post("/urls/:id/delete", (req, res) => {
-  const deleteURL = req.params.id;
-  delete urlDatabase[deleteURL];
-  res.redirect('/urls')
+  const deleteURL = req.params.shortURL;
+  const userLinks = urlsForUser(users[req.session.user_id], urlDatabase);
+  for (links in userLinks) {
+    if (links === deleteURL) {
+      delete urlDatabase[deleteURL];
+      res.redirect('/urls')
+    } else {
+      return res.send("You do not have the authorization to delete this URL.")
+    }
+  }
 });
 
 //Users are able to edit their URLs
-app.post("/urls/:id/edit", (req, res) => {
+app.post("/urls/:id", (req, res) => {
   const editURL = req.params.id;
-  urlDatabase[editURL].longURL = req.body.longURL;
-  res.redirect('/urls')
+  const filterURL = urlsForUser(users[req.session.user_id], urlDatabase);
+  if (Object.keys(filterURL).includes(req.session.user_id)) {
+    urlDatabase[editURL].longURL = req.body.longURL;
+    res.redirect('/urls')
+  } else {
+    return res.send("You do not have the authorization to edit this URL.")
+  }
 });
 
 //Registers new users
@@ -147,16 +155,16 @@ app.post("/register", (req, res) => {
 
 //Login user to access URLs
 app.post("/login", (req, res) => {
-  const useremail = req.body.email;
+  const userEmail = req.body.email;
   const password = req.body.password;
   
-  if (useremail === '') {
+  if (userEmail === '') {
     return res.send('Please enter email')
   }
   if (password === '') {
     return res.send('Please enter password')
   }
-  let userObject = getUserByEmail(useremail, users)
+  let userObject = getUserByEmail(userEmail, users)
   if (userObject === null) {
     return res.send('The user does not exist')
   }

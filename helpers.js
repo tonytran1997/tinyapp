@@ -29,7 +29,7 @@ const urlsForUser = (id, database) => {
   return userUrls
 };
 
-const verifyshortURL = (URL, database) => {
+const verifyShortURL = (URL, database) => {
   return database[URL];
 }
 
@@ -41,4 +41,4 @@ const currentUser = (curr, database) => {
   }
 };
 
-module.exports = {getUserByEmail, generateRandomString, addUser, urlsForUser, verifyshortURL,currentUser};
+module.exports = {getUserByEmail, generateRandomString, addUser, urlsForUser, verifyShortURL,currentUser};
