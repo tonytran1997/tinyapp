@@ -13,7 +13,7 @@ app.use(cookie({
 
 const { generateRandomString, urlsForUser, getUserByEmail, addUser, verifyShortURL, currentUser } = require("./helpers");
 
-const { urlDatabase, users} = require("./database")
+const { urlDatabase, users } = require("./database")
 
 //Redirects users to /login or /urls depending if they are logged in
 app.get("/", (req, res) => {
@@ -109,48 +109,70 @@ app.post("/urls", (req, res) => {
 
 //Users are able to delete URLs
 app.post("/urls/:id/delete", (req, res) => {
-  const deleteURL = req.params.shortURL;
-  const userLinks = urlsForUser(users[req.session.user_id], urlDatabase);
-  for (links in userLinks) {
-    if (links === deleteURL) {
-      delete urlDatabase[deleteURL];
-      res.redirect('/urls')
-    } else {
-      return res.send("You do not have the authorization to delete this URL.")
-    }
+  const deleteURL = req.params.id;
+  const userId = req.session.user_id;
+
+  if (!userId) {
+    return res.send("Please login")
   }
+
+  if (!urlDatabase[deleteURL]) {
+    return res.send("This URL does not exist")
+  }
+
+  const user = currentUser(req.session.user_id, users);
+
+  if (user !== urlDatabase[req.params.id].userID) {
+    return res.send("You do not have the authorization to edit this URL.")
+  }
+
+  delete urlDatabase[deleteURL];
+  res.redirect('/urls')
 });
 
 //Users are able to edit their URLs
 app.post("/urls/:id", (req, res) => {
   const editURL = req.params.id;
-  const filterURL = urlsForUser(users[req.session.user_id], urlDatabase);
-  if (Object.keys(filterURL).includes(req.session.user_id)) {
-    urlDatabase[editURL].longURL = req.body.longURL;
-    res.redirect('/urls')
-  } else {
+  const userId = req.session.user_id;
+
+  if (!userId) {
+    return res.send("Please login")
+  }
+
+  if (!urlDatabase[editURL]) {
+    return res.send("This URL does not exist")
+  }
+
+  const user = currentUser(req.session.user_id, users);
+
+  if (user !== urlDatabase[req.params.id].userID) {
     return res.send("You do not have the authorization to edit this URL.")
   }
+  
+  urlDatabase[editURL].longURL = req.body.longURL;
+  res.redirect('/urls');
 });
 
 //Registers new users
 app.post("/register", (req, res) => {
-  const {email, password} = req.body;
-  if (email === '') {
-    return res.status(400).send('Please enter an email')
-  } else if (password === '') {
-     return res.status(400).send('Please enter your password')
-  } else if (getUserByEmail(email, users)) {
-     return res.status(400).send('The email you have entered is already registered')
-  } else {
-    const encrpytedUser = {
-      email: email, 
-      password: bcrypt.hashSync(password, 10)
-    }
-    const newUsers = addUser(encrpytedUser, users)
-    req.session.user_id = newUsers.userID
-    res.redirect('/urls') 
+  const { email, password } = req.body;
+
+  if (email === '' || password === '') {
+    return res.status(400).send('Please enter a valid email or password')
   }
+
+  if (getUserByEmail(email, users)) {
+    return res.status(400).send('The email you have entered is already registered')
+  }
+
+  const encrpytedUser = {
+    email,
+    password: bcrypt.hashSync(password, 10)
+  }
+  const newUsers = addUser(encrpytedUser, users);
+
+  req.session.user_id = newUsers.userID
+  res.redirect('/urls')
 });
 
 //Login user to access URLs
