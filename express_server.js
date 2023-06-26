@@ -71,11 +71,19 @@ app.get("/urls/:id", (req, res) => {
 //Users are able to access longURL website with shortURL
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  if (verifyShortURL(id,urlDatabase)){
+
+  if (verifyShortURL(id, urlDatabase)) {
     const longURL = urlDatabase[id].longURL;
-    res.redirect(longURL);
-  } else{
-    return res.send("Error : does not exist");
+
+    if (longURL.startsWith("http://") || longURL.startsWith("https://")) {
+      res.redirect(longURL);
+      
+    } else {
+      res.redirect(`http://${longURL}`);
+    }
+
+  } else {
+    return res.send("Error: URL does not exist");
   }
 });
 
